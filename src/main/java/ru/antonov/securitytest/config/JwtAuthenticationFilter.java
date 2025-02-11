@@ -6,19 +6,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ru.antonov.securitytest.token.TokenRepository;
+import ru.antonov.securitytest.auth.token.Token;
+import ru.antonov.securitytest.auth.token.TokenMode;
+import ru.antonov.securitytest.auth.token.TokenRepository;
 
 import java.io.IOException;
-import java.security.Principal;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -42,17 +42,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String jwt = authHeader.substring(7);
+        Optional<Token> optToken = tokenRepository.findByToken(jwt);
+        if(optToken.isEmpty() || !optToken.get().getTokenMode().equals(TokenMode.ACCESS)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String username = jwtService.extractUsername(jwt);
 
         if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            // Если username в токене совпадает с username в UserDetails (из БД) и токен не истек
-            // то он является валидным
             // todo Зачем проверять username еще раз??
-            var isTokenValid = tokenRepository.findByToken(jwt)
+            var isTokenValid = optToken
                     .map( t -> !t.isExpired() && !t.isRevoked() )
-                    .orElse(false);
-            if(jwtService.isTokenValid(jwt, userDetails) && isTokenValid ){
+                    .get();
+            if(jwtService.isTokenValid(jwt, userDetails) && isTokenValid){
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities()
                 );
@@ -62,6 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
         filterChain.doFilter(request, response);
     }
 }

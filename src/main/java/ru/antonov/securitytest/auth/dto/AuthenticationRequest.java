@@ -1,4 +1,4 @@
-package ru.antonov.securitytest.auth;
+package ru.antonov.securitytest.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

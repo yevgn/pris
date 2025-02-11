@@ -1,15 +1,14 @@
-package ru.antonov.securitytest.user;
+package ru.antonov.securitytest.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import ru.antonov.securitytest.token.Token;
+import ru.antonov.securitytest.auth.role.Role;
 
 import java.util.Collection;
 import java.util.List;
-
 
 @Getter
 @Setter
@@ -17,24 +16,28 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = {@UniqueConstraint(columnNames = "email")}
+)
 public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "my_seq")
-    @SequenceGenerator(name = "my_seq", sequenceName = "my_seq", allocationSize = 10)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
+    @SequenceGenerator(name = "user_seq", sequenceName = "user_seq", allocationSize = 10)
+    private Integer id;
 
-    private String firstname;
+    private String surname;
 
-    private String lastname;
+    private String name;
+
+    private String patronymic;
 
     private String email;
 
+    private String gr;
+
     @Enumerated(value = EnumType.STRING)
     private Role role;
-
-    @OneToMany(mappedBy = "user")
-    private List<Token> tokens;
 
     private String password;
 
@@ -50,5 +53,4 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
-
 }

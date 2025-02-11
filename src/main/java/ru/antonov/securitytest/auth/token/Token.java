@@ -1,8 +1,8 @@
-package ru.antonov.securitytest.token;
+package ru.antonov.securitytest.auth.token;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.antonov.securitytest.user.User;
+import ru.antonov.securitytest.entity.User;
 
 @Getter
 @Setter
@@ -21,6 +21,9 @@ public class Token {
 
     @Enumerated(EnumType.STRING)
     private TokenType tokenType;
+
+    @Enumerated(EnumType.STRING)
+    private TokenMode tokenMode;
 
     private boolean expired;
 

@@ -1,4 +1,4 @@
-package ru.antonov.securitytest.token;
+package ru.antonov.securitytest.auth.token;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,7 +14,14 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
             WHERE u.id = :userId and (t.expired = false and t.revoked = false)
             """
     )
-    List<Token> findAllValidTokenByUser(Long userId);
+    List<Token> findAllValidTokenByUser(Integer userId);
 
     Optional<Token> findByToken(String token);
+
+    @Query(value = """
+            SELECT t FROM Token t JOIN User u ON t.user.id = u.id
+            WHERE u.email = :email AND t.tokenMode = REFRESH
+            AND t.expired = false AND t.revoked = false
+            """)
+    List<Token> findNotRevokedAndNotExpiredRefreshTokenByUserEmail(String email);
 }
